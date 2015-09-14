@@ -48,6 +48,7 @@ public:
   virtual void Unimplemented(const char* name);
   virtual void BeforeModule(WasmModule* m);
   virtual void AfterModule(WasmModule* m);
+  virtual void BeforeFunction(WasmModule* m, WasmFunction *f);
   virtual void AfterExport(WasmModule* m, WasmExport* e);
  private:
   WasmParser parser = {};
@@ -59,6 +60,9 @@ public:
   }
   static void after_module(WasmModule* m, void* user) {
     static_cast<Parser*>(user)->AfterModule(m);
+  }
+  static void before_function(WasmModule* m, WasmFunction* f, void* user) {
+    static_cast<Parser*>(user)->BeforeFunction(m, f);
   }
   static void after_export(WasmModule* m, WasmExport* e, void* user) {
     static_cast<Parser*>(user)->AfterExport(m, e);

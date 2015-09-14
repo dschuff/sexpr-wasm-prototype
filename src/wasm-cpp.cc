@@ -31,6 +31,19 @@ void Parser::BeforeModule(WasmModule* m) {
       func.locals.emplace_back();
       func.locals.back().type = parser_func->locals.data[j].type;
     }
+    for (size_t j = 0; j < parser_func->local_bindings.size; ++j) {
+      auto &binding = parser_func->local_bindings.data[j];
+      if (binding.index < parser_func->num_args) {
+        func.args[binding.index].local_name.assign(binding.name);
+      } else {
+        func.locals[binding.index - parser_func->num_args].local_name.assign(
+            binding.name);
+      }
+    }
+  }
+  for (size_t i = 0; i < m->function_bindings.size; ++i) {
+    auto &binding = m->function_bindings.data[i];
+    module.functions[binding.index].local_name.assign(binding.name);
   }
 
   for (size_t i = 0; i < m->segments.size; ++i)
@@ -40,6 +53,11 @@ void Parser::BeforeModule(WasmModule* m) {
 void Parser::AfterModule(WasmModule* m) {
   Unimplemented("AfterModule");
 }
+
+void Parser::BeforeFunction(WasmModule* m, WasmFunction* f) {
+  Unimplemented("BeforeFunction");
+}
+
 void Parser::AfterExport(WasmModule* m, WasmExport *e) {
   WasmAst::Function *f = &module.functions[e->index];
   f->export_name =  e->name;

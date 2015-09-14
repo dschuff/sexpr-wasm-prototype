@@ -54,7 +54,7 @@ class DumpParser : public wasm::Parser {
   }
  protected:
   void AfterModule(WasmModule* m) override {
-    dump_module(*m);
+    //dump_module(*m);
   }
 };
 

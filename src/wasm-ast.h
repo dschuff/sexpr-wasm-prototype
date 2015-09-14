@@ -17,6 +17,17 @@ namespace WasmAst {
 
 //const char* type_names[WASM_NUM_TYPES];
 
+inline static const char* TypeName(WasmType t) {
+  switch(t) {
+    case WASM_TYPE_VOID: return "void";
+    case WASM_TYPE_I32: return "i32";
+    case WASM_TYPE_I64: return "i64";
+    case WASM_TYPE_F32: return "f32";
+    case WASM_TYPE_F64: return "f64";
+    default: return "(unknown type)";
+  }
+}
+
 class Variable {
  public:
   WasmVariable* parse_variable;
@@ -45,7 +56,7 @@ class Function {
       printf(" (param");
       if (arg.local_name.size())
         printf(" %s", arg.local_name.c_str());
-      printf(" %d)", arg.type);
+      printf(" %s)", TypeName(arg.type));
     }
 
     if (result_type != WASM_TYPE_VOID)
