@@ -8,15 +8,6 @@
 
 namespace WasmAst {
 
-// TODO(dschuff): Not sure whether pass-through the WasmFoo objects and just
-// add extra things as needed, or duplicate everything to get a pure C++-y IR.
-// For now just pass-through WasmType, WasmMemType, WasmOpType, WasmOpcode,
-// WasmTokenType, WasmSourceLocation, WasmSourceRange, and WasmToken (which can
-// hopefully be used as-is but create new structures for Variable, Function, and
-// Module for easier use.
-
-//const char* type_names[WASM_NUM_TYPES];
-
 inline static const char* TypeName(WasmType t) {
   switch(t) {
     case WASM_TYPE_VOID: return "void";
@@ -63,14 +54,6 @@ class Function {
 };
 
 
-inline static std::string
-string_from_token(const WasmToken& t) {
-  if (t.type != WASM_TOKEN_TYPE_STRING)
-    return std::string();
-  return std::string(t.range.start.pos,
-                     t.range.end.pos);
-}
-
 class Segment {
  public:
   size_t size = 0;
@@ -84,7 +67,7 @@ class Module {
  public:
   std::vector<Function> functions;
   std::vector<Function*> exports;
-  std::vector<Segment> segments; // TODO(dschuff) dup the seg data?
+  std::vector<Segment> segments;
   uint32_t initial_memory_size = 0;
   uint32_t max_memory_size = 0;
 
