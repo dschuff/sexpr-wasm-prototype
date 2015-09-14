@@ -30,14 +30,12 @@ inline static const char* TypeName(WasmType t) {
 
 class Variable {
  public:
-  WasmVariable* parse_variable = nullptr;
   WasmType type = WASM_TYPE_VOID;
   std::string local_name;  // Empty if none bound
 };
 
 class Function {
  public:
-  WasmFunction* parse_function = nullptr;
   WasmType result_type = WASM_TYPE_VOID;
   std::vector<Variable> args;
   std::vector<Variable> locals;
@@ -84,7 +82,6 @@ class Segment {
 
 class Module {
  public:
-  WasmModule* parse_module = nullptr;
   std::vector<Function> functions;
   std::vector<Function*> exports;
   std::vector<Segment> segments; // TODO(dschuff) dup the seg data?
@@ -96,13 +93,15 @@ class Module {
     for (auto& func : functions)
       func.dump();
 
-    if (initial_memory_size)
-      printf("(memory %u\n", initial_memory_size);
-    for (auto& seg : segments) {
-      printf("(segment %u \"%s\")\n", seg.address, seg.as_string().c_str());
-    }
-    if (initial_memory_size)
+    if (initial_memory_size) {
+      printf("(memory %u", initial_memory_size);
+      if (max_memory_size)
+        printf(" %u", max_memory_size);
+      for (auto& seg : segments) {
+        printf("(segment %u \"%s\")\n", seg.address, seg.as_string().c_str());
+      }
       printf(")\n");
+    }
 
     for (auto* ex : exports) {
       printf("(export \"%s\" %u)", ex->export_name.c_str(), ex->index_in_module);

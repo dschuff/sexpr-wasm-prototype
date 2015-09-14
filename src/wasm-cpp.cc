@@ -7,9 +7,10 @@ void Parser::Unimplemented(const char* name) {
   printf("%s\n", name);
 }
 void Parser::BeforeModule(WasmModule* m) {
-  module.parse_module = m;
-  module.max_memory_size = m->max_memory_size;
   module.initial_memory_size = m->initial_memory_size;
+  module.max_memory_size = m->max_memory_size;
+  assert(module.max_memory_size >= module.initial_memory_size);
+
 
   module.functions.reserve(m->functions.size);
   for (size_t i = 0; i < m->functions.size; ++i) {
@@ -47,7 +48,10 @@ void Parser::BeforeModule(WasmModule* m) {
     module.functions[binding.index].local_name.assign(binding.name);
   }
 
-  module.segments.reserve(m->segments.size);
+  if (m->segments.size) {
+    assert(module.initial_memory_size > 0);
+    module.segments.reserve(m->segments.size);
+  }
   for (size_t i = 0; i < m->segments.size; ++i) {
     WasmSegment &parser_seg = m->segments.data[i];
     module.segments.emplace_back();
@@ -62,6 +66,7 @@ void Parser::BeforeModule(WasmModule* m) {
 }
 
 void Parser::AfterModule(WasmModule* m) {
+  // When this function returns, the parser will destroy all of its objects.
   Unimplemented("AfterModule");
 }
 
