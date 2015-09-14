@@ -30,8 +30,8 @@ inline static const char* TypeName(WasmType t) {
 
 class Variable {
  public:
-  WasmVariable* parse_variable;
-  WasmType type;
+  WasmVariable* parse_variable = nullptr;
+  WasmType type = WASM_TYPE_VOID;
   std::string local_name;  // Empty if none bound
 };
 
@@ -44,7 +44,6 @@ class Function {
   std::string local_name; // Empty if none bound
   std::string export_name; // Empty if not exported.
   int index_in_module = 0;
-  // int export_index; // Is this needed?
   bool is_external = false;
   int depth = 0;
 
@@ -74,12 +73,21 @@ string_from_token(const WasmToken& t) {
                      t.range.end.pos);
 }
 
+class Segment {
+ public:
+  size_t size = 0;
+  size_t address = 0;
+  std::vector<char> initial_data;
+  std::string as_string() const { return std::string(initial_data.begin(),
+                                                     initial_data.end()); }
+};
+
 class Module {
  public:
   WasmModule* parse_module = nullptr;
   std::vector<Function> functions;
   std::vector<Function*> exports;
-  std::vector<WasmSegment> segments; // TODO(dschuff) dup the seg data?
+  std::vector<Segment> segments; // TODO(dschuff) dup the seg data?
   uint32_t initial_memory_size = 0;
   uint32_t max_memory_size = 0;
 
@@ -91,8 +99,7 @@ class Module {
     if (initial_memory_size)
       printf("(memory %u\n", initial_memory_size);
     for (auto& seg : segments) {
-      printf("(segment %u %s)\n", seg.address,
-             string_from_token(seg.data).c_str());
+      printf("(segment %u \"%s\")\n", seg.address, seg.as_string().c_str());
     }
     if (initial_memory_size)
       printf(")\n");

@@ -14,50 +14,6 @@ InputFilename(llvm::cl::Positional, llvm::cl::desc("<input sexpr file>"),
               llvm::cl::init("-"));
 
 
-void dump_function(const WasmFunction& func, const WasmBinding* binding) {
-  printf("  (func ");
-  if (binding && binding->name)
-    printf("%s", binding->name);
-  if (func.num_args) {
-    for (int i = 0; i < func.num_args; ++i) {
-      printf(" (param");
-
-      if (func.local_bindings.data[i].name)
-        printf(" %s", func.local_bindings.data[i].name);
-      printf(" %d)", func.locals.data[i].type);
-    }
-  }
-  if (func.result_types.size) {
-    printf(" (result");
-    for (size_t i = 0; i < func.result_types.size; ++i) {
-      printf(" %d", func.result_types.data[i]);
-    }
-    printf(")");
-  }
-  printf(")\n");
-}
-
-
-void dump_module(const WasmModule& mod) {
-  printf("(module\n");
-  for(size_t i = 0; i < mod.functions.size; ++i) {
-    dump_function(mod.functions.data[i], &mod.function_bindings.data[i]);
-  }
-  printf(")\n");
-}
-
-class DumpParser : public wasm::Parser {
- public:
-  DumpParser(const char *start, const char* end) : Parser(start, end) {
-    printf("DumpParser %p\n", this);
-
-  }
- protected:
-  void AfterModule(WasmModule* m) override {
-    //dump_module(*m);
-  }
-};
-
 
 int main(int argc, char** argv) {
 
@@ -88,12 +44,9 @@ int main(int argc, char** argv) {
   data[fsize] = '\0';
   puts(data);
 
-  DumpParser DumbParser(data, data + fsize);
+  wasm::Parser DumbParser(data, data + fsize);
   DumbParser.Parse();
   DumbParser.module.dump();
-
-  //dump_module(mod);
-
 
   return 0;
 }
