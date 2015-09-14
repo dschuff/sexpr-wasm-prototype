@@ -26,15 +26,16 @@ class Variable {
 
 class Function {
  public:
-  WasmFunction* parse_function;
-  WasmType result_type;
+  WasmFunction* parse_function = nullptr;
+  WasmType result_type = WASM_TYPE_VOID;
   std::vector<Variable> args;
   std::vector<Variable> locals;
   std::string local_name; // Empty if none bound
   std::string export_name; // Empty if not exported.
+  int index_in_module = 0;
   // int export_index; // Is this needed?
-  bool is_external;
-  int depth;
+  bool is_external = false;
+  int depth = 0;
 
   void dump() {
     printf("  (func ");
@@ -49,25 +50,45 @@ class Function {
 
     if (result_type != WASM_TYPE_VOID)
       printf(" (result %d)", result_type);
-
     printf(")\n");
   }
 };
 
 
+inline static std::string
+string_from_token(const WasmToken& t) {
+  if (t.type != WASM_TOKEN_TYPE_STRING)
+    return std::string();
+  return std::string(t.range.start.pos,
+                     t.range.end.pos);
+}
+
 class Module {
  public:
-  WasmModule* parse_module;
+  WasmModule* parse_module = nullptr;
   std::vector<Function> functions;
   std::vector<Function*> exports;
-  std::vector<WasmSegment> segments;
-  uint32_t initial_memory_size;
-  uint32_t max_memory_size;
+  std::vector<WasmSegment> segments; // TODO(dschuff) dup the seg data?
+  uint32_t initial_memory_size = 0;
+  uint32_t max_memory_size = 0;
 
   void dump() {
     printf("(module\n");
     for (auto& func : functions)
       func.dump();
+
+    if (initial_memory_size)
+      printf("(memory %u\n", initial_memory_size);
+    for (auto& seg : segments) {
+      printf("(segment %u %s)\n", seg.address,
+             string_from_token(seg.data).c_str());
+    }
+    if (initial_memory_size)
+      printf(")\n");
+
+    for (auto* ex : exports) {
+      printf("(export \"%s\" %u)", ex->export_name.c_str(), ex->index_in_module);
+    }
     printf(")\n");
   }
 };

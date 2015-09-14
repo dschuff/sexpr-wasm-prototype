@@ -33,6 +33,7 @@ public:
     parser.before_compare = unimplemented<enum WasmOpcode>;
     parser.before_const = unimplemented<enum WasmOpcode>;
     parser.before_convert = unimplemented<enum WasmOpcode>;
+    parser.after_nop = unimplemented<>;
     parser.before_return = unimplemented<>;
     parser.u32_literal = unimplemented<uint32_t>;
 
@@ -47,7 +48,7 @@ public:
   virtual void Unimplemented(const char* name);
   virtual void BeforeModule(WasmModule* m);
   virtual void AfterModule(WasmModule* m);
-  virtual void AfterExport(WasmModule* m, int);
+  virtual void AfterExport(WasmModule* m, WasmExport* e);
  private:
   WasmParser parser = {};
   WasmSource source_;
@@ -59,7 +60,7 @@ public:
   static void after_module(WasmModule* m, void* user) {
     static_cast<Parser*>(user)->AfterModule(m);
   }
-  static void after_export(WasmModule* m, int e, void* user) {
+  static void after_export(WasmModule* m, WasmExport* e, void* user) {
     static_cast<Parser*>(user)->AfterExport(m, e);
   }
   template <typename T, typename... Args> static T

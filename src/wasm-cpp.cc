@@ -9,7 +9,7 @@ void Parser::Unimplemented(const char* name) {
 void Parser::BeforeModule(WasmModule* m) {
   module.parse_module = m;
   module.max_memory_size = m->max_memory_size;
-  // initial_memory_size = ??
+  module.initial_memory_size = m->initial_memory_size;
 
   module.functions.reserve(m->functions.size);
   for (size_t i = 0; i < m->functions.size; ++i) {
@@ -17,6 +17,7 @@ void Parser::BeforeModule(WasmModule* m) {
     module.functions.emplace_back();
     auto &func = module.functions.back();
 
+    func.index_in_module = i;
     assert(parser_func->result_types.size < 2);
     func.result_type = parser_func->result_types.size ?
         parser_func->result_types.data[0] : WASM_TYPE_VOID;
@@ -31,13 +32,18 @@ void Parser::BeforeModule(WasmModule* m) {
       func.locals.back().type = parser_func->locals.data[j].type;
     }
   }
+
+  for (size_t i = 0; i < m->segments.size; ++i)
+    module.segments.emplace_back(m->segments.data[i]);
 }
 
 void Parser::AfterModule(WasmModule* m) {
   Unimplemented("AfterModule");
 }
-void Parser::AfterExport(WasmModule* m, int e) {
-  Unimplemented("AfterModule");
+void Parser::AfterExport(WasmModule* m, WasmExport *e) {
+  WasmAst::Function *f = &module.functions[e->index];
+  f->export_name =  e->name;
+  module.exports.push_back(f);
 }
 
 }

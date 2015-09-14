@@ -14,10 +14,10 @@ InputFilename(llvm::cl::Positional, llvm::cl::desc("<input sexpr file>"),
               llvm::cl::init("-"));
 
 
-void dump_function(const WasmFunction& func, const WasmBinding& binding) {
+void dump_function(const WasmFunction& func, const WasmBinding* binding) {
   printf("  (func ");
-  if (binding.name)
-    printf("%s", binding.name);
+  if (binding && binding->name)
+    printf("%s", binding->name);
   if (func.num_args) {
     for (int i = 0; i < func.num_args; ++i) {
       printf(" (param");
@@ -41,7 +41,7 @@ void dump_function(const WasmFunction& func, const WasmBinding& binding) {
 void dump_module(const WasmModule& mod) {
   printf("(module\n");
   for(size_t i = 0; i < mod.functions.size; ++i) {
-    dump_function(mod.functions.data[i], mod.function_bindings.data[i]);
+    dump_function(mod.functions.data[i], &mod.function_bindings.data[i]);
   }
   printf(")\n");
 }

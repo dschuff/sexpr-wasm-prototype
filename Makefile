@@ -7,7 +7,7 @@ CFLAGS = -Wall -Werror -g -O0
 
 PARSER_OBJS = out/wasm-parse.o
 WASMGEN_OBJS = out/sexpr-wasm.o out/wasm-gen.o
-HEADERS = src/wasm.h src/wasm-parse.h src/hash.h
+HEADERS = src/wasm.h src/wasm-ast.h src/wasm-parse.h src/hash.h
 
 LLVM_PATH ?= /s/llvm-upstream/release_37/install
 LLVM_CONFIG = $(LLVM_PATH)/bin/llvm-config
