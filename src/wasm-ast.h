@@ -79,7 +79,7 @@ class Module {
     if (initial_memory_size) {
       printf("(memory %u", initial_memory_size);
       if (max_memory_size)
-        printf(" %u", max_memory_size);
+        printf(" %u ", max_memory_size);
       for (auto& seg : segments) {
         printf("(segment %u \"%s\")\n", seg.address, seg.as_string().c_str());
       }
