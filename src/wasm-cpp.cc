@@ -65,15 +65,6 @@ void Parser::BeforeModule(WasmModule* m) {
   }
 }
 
-void Parser::AfterModule(WasmModule* m) {
-  // When this function returns, the parser will destroy all of its objects.
-  Unimplemented("AfterModule");
-}
-
-void Parser::BeforeFunction(WasmModule* m, WasmFunction* f) {
-  Unimplemented("BeforeFunction");
-}
-
 void Parser::AfterExport(WasmModule* m, WasmExport *e) {
   WasmAst::Function *f = &module.functions[e->index];
   f->export_name =  e->name;

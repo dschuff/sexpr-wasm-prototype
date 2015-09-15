@@ -48,7 +48,7 @@ class Function {
     }
 
     if (result_type != WASM_TYPE_VOID)
-      printf(" (result %d)", result_type);
+      printf(" (result %s)", TypeName(result_type));
     printf(")\n");
   }
 };

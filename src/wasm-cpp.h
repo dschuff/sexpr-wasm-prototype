@@ -21,22 +21,38 @@ public:
 
     parser.user_data = this;
     parser.before_module = before_module;
-    parser.after_module = after_module;
+    parser.after_module = unimplemented<WasmModule*>;
     parser.before_function = unimplemented<WasmModule*, WasmFunction*>;
     parser.after_function = unimplemented<WasmModule*, WasmFunction*, int>;
     parser.before_export = unimplemented<WasmModule*>;
     parser.after_export = after_export;
     parser.before_binary = unimplemented<enum WasmOpcode>;
     parser.before_block = unimplementedT<WasmParserCookie>;
+    parser.after_block = unimplemented<int, WasmParserCookie>;
     parser.after_break = unimplemented<int>;
     parser.before_call = unimplemented<int>;
     parser.before_compare = unimplemented<enum WasmOpcode>;
     parser.before_const = unimplemented<enum WasmOpcode>;
     parser.before_convert = unimplemented<enum WasmOpcode>;
+    parser.before_label = unimplementedT<WasmParserCookie>;
+    parser.after_label = unimplemented<int, WasmParserCookie>;
+    parser.after_get_local = unimplemented<int>;
+    parser.before_loop = unimplementedT<WasmParserCookie>;
+    parser.after_loop = unimplemented<int, WasmParserCookie>;
+    parser.before_if = unimplementedT<WasmParserCookie>;
+    parser.after_if = unimplemented<int, WasmParserCookie>;
+    parser.before_load = unimplemented<enum WasmOpcode, uint8_t>;
+    parser.after_load_global = unimplemented<int>;
     parser.after_nop = unimplemented<>;
     parser.before_return = unimplemented<>;
+    parser.before_set_local = unimplemented<int>;
+    parser.before_store = unimplemented<enum WasmOpcode, uint8_t>;
+    parser.before_store_global = unimplemented<int>;
+    parser.before_unary = unimplemented<enum WasmOpcode>;
     parser.u32_literal = unimplemented<uint32_t>;
-
+    parser.u64_literal = unimplemented<uint64_t>;
+    parser.f32_literal = unimplemented<float>;
+    parser.f64_literal = unimplemented<double>;
   }
   void Parse() {
     wasm_parse_file(&parser, &tokenizer_);
@@ -47,8 +63,6 @@ public:
  protected:
   virtual void Unimplemented(const char* name);
   virtual void BeforeModule(WasmModule* m);
-  virtual void AfterModule(WasmModule* m);
-  virtual void BeforeFunction(WasmModule* m, WasmFunction *f);
   virtual void AfterExport(WasmModule* m, WasmExport* e);
  private:
   WasmParser parser = {};
@@ -58,12 +72,7 @@ public:
   static void before_module(WasmModule* m, void* user) {
     static_cast<Parser*>(user)->BeforeModule(m);
   }
-  static void after_module(WasmModule* m, void* user) {
-    static_cast<Parser*>(user)->AfterModule(m);
-  }
-  static void before_function(WasmModule* m, WasmFunction* f, void* user) {
-    static_cast<Parser*>(user)->BeforeFunction(m, f);
-  }
+
   static void after_export(WasmModule* m, WasmExport* e, void* user) {
     static_cast<Parser*>(user)->AfterExport(m, e);
   }
@@ -75,7 +84,7 @@ public:
 
   template <typename... Args> static void
   unimplemented(Args... args, void *user) {
-    static_cast<Parser*>(user)->Unimplemented("(generic)");
+
   }
 };
 
