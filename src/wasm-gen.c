@@ -190,7 +190,7 @@ static void out_module_header(OutputBuffer* buf, WasmModule* module) {
   out_u8(buf, log_two_u32(module->max_memory_size), "mem size log 2");
   out_u8(buf, DEFAULT_MEMORY_EXPORT, "export mem");
   out_u16(buf, module->globals.size, "num globals");
-  out_u16(buf, module->functions.size, "num funcs");
+  out_u16(buf, module->imports.size + module->functions.size, "num funcs");
   out_u16(buf, module->segments.size, "num data segments");
 
   int i;
@@ -207,6 +207,30 @@ static void out_module_header(OutputBuffer* buf, WasmModule* module) {
     out_u8(buf, global_type_codes[global->type], "global mem type");
     out_u32(buf, 0, "global offset");
     out_u8(buf, 0, "export global");
+  }
+
+  for (i = 0; i < module->imports.size; ++i) {
+    WasmImport* import = &module->imports.data[i];
+    if (g_verbose)
+      printf("; import header %d\n", i);
+
+    out_u8(buf, import->args.size, "import num args");
+    out_u8(buf, import->result_type, "import result_type");
+
+    int j;
+    for (j = 0; j < import->args.size; ++j)
+      out_u8(buf, import->args.data[j].type, "import arg type");
+
+    import->offset = buf->size;
+    out_u32(buf, 0, "import name offset");
+    out_u32(buf, 0, "import code start offset");
+    out_u32(buf, 0, "import code end offset");
+    out_u16(buf, 0, "num local i32");
+    out_u16(buf, 0, "num local i64");
+    out_u16(buf, 0, "num local f32");
+    out_u16(buf, 0, "num local f64");
+    out_u8(buf, 0, "export func");
+    out_u8(buf, 1, "import external");
   }
 
   for (i = 0; i < module->functions.size; ++i) {
@@ -270,6 +294,11 @@ static void out_module_footer(OutputBuffer* buf, WasmModule* module) {
   /* output name table */
   if (g_verbose)
     printf("; names\n");
+  for (i = 0; i < module->imports.size; ++i) {
+    WasmImport* import = &module->imports.data[i];
+    out_u32_at(buf, import->offset, buf->size, "FIXUP import name offset");
+    out_cstr(buf, import->func_name, "import name");
+  }
   for (i = 0; i < module->exports.size; ++i) {
     WasmExport* export = &module->exports.data[i];
     WasmFunction* function = &module->functions.data[export->index];
@@ -279,12 +308,14 @@ static void out_module_footer(OutputBuffer* buf, WasmModule* module) {
 }
 
 typedef struct Context {
+  WasmModule* module;
   OutputBuffer* buf;
   int function_num_exprs_offset;
 } Context;
 
 static void before_module(WasmModule* module, void* user_data) {
   Context* ctx = user_data;
+  ctx->module = module;
   init_output_buffer(ctx->buf, INITIAL_OUTPUT_BUFFER_CAPACITY);
   out_module_header(ctx->buf, module);
 }
@@ -376,7 +407,15 @@ static void after_break(int depth, void* user_data) {
 static void before_call(int function_index, void* user_data) {
   Context* ctx = user_data;
   out_opcode(ctx->buf, WASM_OPCODE_CALL);
-  out_leb128(ctx->buf, function_index, "func index");
+  /* defined functions are always after all imports */
+  out_leb128(ctx->buf, ctx->module->imports.size + function_index,
+             "func index");
+}
+
+static void before_call_import(int import_index, void* user_data) {
+  Context* ctx = user_data;
+  out_opcode(ctx->buf, WASM_OPCODE_CALL);
+  out_leb128(ctx->buf, import_index, "import index");
 }
 
 static void before_compare(enum WasmOpcode opcode, void* user_data) {
@@ -535,6 +574,7 @@ void gen_file(WasmTokenizer* tokenizer) {
   parser.before_binary = before_binary;
   parser.after_break = after_break;
   parser.before_call = before_call;
+  parser.before_call_import = before_call_import;
   parser.before_compare = before_compare;
   parser.before_const = before_const;
   parser.before_convert = before_convert;
