@@ -80,6 +80,9 @@ class Segment {
   std::vector<char> initial_data;
   std::string as_string() const { return std::string(initial_data.begin(),
                                                      initial_data.end()); }
+  void dump() {
+    printf("(segment %u \"%s\")\n", address, as_string().c_str());
+  }
 };
 
 class Module {
@@ -100,18 +103,16 @@ class Module {
       printf("(memory %u", initial_memory_size);
       if (max_memory_size)
         printf(" %u ", max_memory_size);
-      for (auto& seg : segments) {
-        printf("(segment %u \"%s\")", seg.address, seg.as_string().c_str());
-      }
+      for (auto& seg : segments)
+        seg.dump();
       printf(")\n");
     }
 
-    for (auto& imp : imports) {
+    for (auto& imp : imports)
       imp.dump();
-    }
-    for (auto* ex : exports) {
+    for (auto* ex : exports)
       printf("(export \"%s\" %u)", ex->export_name.c_str(), ex->index_in_module);
-    }
+
     printf(")\n");
   }
 };
