@@ -25,21 +25,12 @@ class Variable {
   std::string local_name;  // Empty if none bound
 };
 
-class Function {
+class Callable {
  public:
   WasmType result_type = WASM_TYPE_VOID;
   std::vector<Variable> args;
-  std::vector<Variable> locals;
   std::string local_name; // Empty if none bound
-  std::string export_name; // Empty if not exported.
-  int index_in_module = 0;
-  bool is_external = false;
-  int depth = 0;
-
-  void dump() {
-    printf("  (func ");
-    if (local_name.size())
-      printf("%s", local_name.c_str());
+  void dump_params_result() {
     for (auto &arg : args) {
       printf(" (param");
       if (arg.local_name.size())
@@ -49,10 +40,38 @@ class Function {
 
     if (result_type != WASM_TYPE_VOID)
       printf(" (result %s)", TypeName(result_type));
+  }
+};
+
+class Function : public Callable {
+ public:
+  std::vector<Variable> locals;
+  std::string export_name; // Empty if not exported.
+  int index_in_module = 0;
+  bool is_external = false;
+  int depth = 0;
+  void dump() {
+    printf("  (func ");
+    if (local_name.size())
+      printf("%s", local_name.c_str());
+    dump_params_result();
     printf(")\n");
   }
 };
 
+class Import : public Callable {
+ public:
+  std::string module_name;
+  std::string func_name;
+  void dump() {
+    printf("(import %s \"%s\" \"%s\"",
+           local_name.c_str(),
+           module_name.c_str(),
+           func_name.c_str());
+    dump_params_result();
+    printf(")\n");
+  }
+};
 
 class Segment {
  public:
@@ -68,6 +87,7 @@ class Module {
   std::vector<Function> functions;
   std::vector<Function*> exports;
   std::vector<Segment> segments;
+  std::vector<Import> imports;
   uint32_t initial_memory_size = 0;
   uint32_t max_memory_size = 0;
 
@@ -81,11 +101,14 @@ class Module {
       if (max_memory_size)
         printf(" %u ", max_memory_size);
       for (auto& seg : segments) {
-        printf("(segment %u \"%s\")\n", seg.address, seg.as_string().c_str());
+        printf("(segment %u \"%s\")", seg.address, seg.as_string().c_str());
       }
       printf(")\n");
     }
 
+    for (auto& imp : imports) {
+      imp.dump();
+    }
     for (auto* ex : exports) {
       printf("(export \"%s\" %u)", ex->export_name.c_str(), ex->index_in_module);
     }

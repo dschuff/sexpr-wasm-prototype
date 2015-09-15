@@ -43,9 +43,28 @@ void Parser::BeforeModule(WasmModule* m) {
       }
     }
   }
+
   for (size_t i = 0; i < m->function_bindings.size; ++i) {
     WasmBinding &binding = m->function_bindings.data[i];
     module.functions[binding.index].local_name.assign(binding.name);
+  }
+
+  for (size_t i = 0; i < m->imports.size; ++i) {
+    WasmImport &parser_import = m->imports.data[i];
+    module.imports.emplace_back();
+    WasmAst::Import &imp = module.imports.back();
+    imp.module_name.assign(parser_import.module_name);
+    imp.func_name.assign(parser_import.func_name);
+    imp.result_type = parser_import.result_type;
+    for (size_t j = 0; j < parser_import.args.size; ++j) {
+      imp.args.emplace_back();
+      imp.args.back().type = parser_import.args.data[j].type;
+    }
+  }
+  for (size_t i = 0; i < m->import_bindings.size; ++i) {
+    WasmBinding &binding = m->import_bindings.data[i];
+    WasmAst::Import &imp = module.imports[binding.index];
+    imp.local_name.assign(binding.name);
   }
 
   if (m->segments.size) {
@@ -67,7 +86,7 @@ void Parser::BeforeModule(WasmModule* m) {
 
 void Parser::AfterExport(WasmModule* m, WasmExport *e) {
   WasmAst::Function *f = &module.functions[e->index];
-  f->export_name =  e->name;
+  f->export_name.assign(e->name);
   module.exports.push_back(f);
 }
 
